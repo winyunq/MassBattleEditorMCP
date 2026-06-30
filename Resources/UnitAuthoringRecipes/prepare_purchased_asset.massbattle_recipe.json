@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "id": "prepare_purchased_asset",
+  "display_name": "Prepare Purchased Skeletal Asset",
+  "description": "Discover textures and animations around a purchased skeletal mesh, then plan official MassBattleEditor-style naming and optional source-folder organization before VAT/unit authoring.",
+  "style_profile": "default",
+  "input_schema": {
+    "skeletal_mesh": "Purchased USkeletalMesh asset path.",
+    "asset_slug": "Stable slug used for official naming, for example SK_JapanSoldier.",
+    "family": "Optional organization family from the style profile.",
+    "source_search_path": "Optional shared search root for textures and animations.",
+    "texture_search_path": "Optional texture search root used by FindAndFillOriginalTextures.",
+    "texture_name_filter": "Optional texture asset name filter. Defaults empty so purchased assets can be discovered before renaming.",
+    "animation_search_path": "Optional animation search root used by FindAndFillAnimSequences.",
+    "animation_name_filter": "Optional animation asset name filter. Defaults empty so compatible animations are discovered by skeleton.",
+    "target_source_package_path": "Optional override for where prepared source assets should be moved.",
+    "move_to_source_folder": "Defaults true. If false, assets are renamed in place.",
+    "dry_run": "Defaults true for apply."
+  },
+  "pipeline": [
+    {
+      "id": "resolve_source_layout",
+      "tool": "style.resolve_source_layout",
+      "description": "Resolve source asset folder and official naming from the selected unit management style."
+    },
+    {
+      "id": "find_textures",
+      "tool": "MCP_FindAndFillOriginalTextures",
+      "description": "Find texture assets around the purchased skeletal mesh."
+    },
+    {
+      "id": "find_animations",
+      "tool": "MCP_FindAndFillAnimSequences",
+      "description": "Find compatible animation sequences by skeleton."
+    },
+    {
+      "id": "rename_and_move_assets",
+      "tool": "AssetTools.RenameAssets",
+      "description": "Rename/move source SkeletalMesh, textures, and animation sequences using MassBattleEditor naming conventions."
+    }
+  ]
+}

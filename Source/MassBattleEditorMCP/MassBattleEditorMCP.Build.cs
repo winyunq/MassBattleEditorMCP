@@ -22,7 +22,8 @@ public class MassBattleEditorMCP : ModuleRules
 				"Core",
 				"MassCore",
 				"MassEntity",
-				"MassBattle"
+				"MassBattle",
+				"MassBattleEditor"
 			}
 		);
 			
@@ -33,7 +34,19 @@ public class MassBattleEditorMCP : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"UnrealEd"
+				"UnrealEd",
+				"Niagara",
+				"NiagaraEditor",
+				"AnimToTexture",
+				"StructUtils",
+				"AssetTools",
+				"AssetRegistry",
+				"MeshUtilities",
+				"MeshConversion",
+				"MeshDescription",
+				"StaticMeshDescription",
+				"Json",
+				"JsonUtilities"
 			}
 		);
 	}

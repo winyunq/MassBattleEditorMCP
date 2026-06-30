@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "id": "add_animation_set",
+  "display_name": "Add Animation Set To Existing Unit",
+  "description": "Find or accept animation sequences, convert them into FAnimsData, and union-merge only AnimShared.AnimData into an existing unit.",
+  "style_profile": "default",
+  "input_schema": {
+    "skeletal_mesh": "Optional USkeletalMesh path used to discover animations by skeleton.",
+    "animation_search_path": "Optional search root for FindAndFillAnimSequences.",
+    "file_name": "Optional name filter for FindAndFillAnimSequences.",
+    "data_asset": "Optional UAnimToTextureDataAsset path for CreateAnimsDataFromSequences.",
+    "found_anims": "Optional FFoundAnimSequences JSON. If provided with data_asset, this can produce an AnimShared merge patch directly.",
+    "unit_patch": "Optional extra source-aligned unit Data JSON to merge with AnimShared."
+  },
+  "pipeline": [
+    {
+      "id": "find_animations",
+      "tool": "MCP_FindAndFillAnimSequences",
+      "optional": true,
+      "description": "Use skeletal_mesh plus animation_search_path to discover candidate animations."
+    },
+    {
+      "id": "create_anim_data",
+      "tool": "MCP_CreateAnimsDataFromSequences",
+      "optional": true,
+      "description": "Use data_asset plus found_anims to generate AnimShared.AnimData values."
+    },
+    {
+      "id": "merge_animshared",
+      "tool": "MCP_UnitPlanMergeUpdate",
+      "description": "Union-merge AnimShared.AnimData into the existing unit without touching unrelated fields."
+    }
+  ],
+  "default_unit_patch": {
+    "Data": {
+      "AnimShared": {}
+    }
+  }
+}

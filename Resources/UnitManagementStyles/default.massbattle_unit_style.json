@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "id": "default",
+  "display_name": "Default MassBattle Unit Management Style",
+  "description": "Default style profile for compact unit queries, balance export, and generated asset organization.",
+  "default_scan_roots": [
+    "/MassBattle/Demo",
+    "/MassBattle/Test"
+  ],
+  "project_scan_roots": [
+    "/Game/Unit",
+    "/Game/Toon_Soldiers_WW2",
+    "/Game/StylizedArmyPackA",
+    "/Game/World_Flags"
+  ],
+  "simple_top_level_fields": [
+    "SubType",
+    "StyleType",
+    "Scaling",
+    "Collider",
+    "PhysicsShared",
+    "Health",
+    "Move",
+    "Attack",
+    "Damage",
+    "Defence",
+    "Trace",
+    "Visualize",
+    "LODShared",
+    "AnimShared"
+  ],
+  "default_export_fields": [
+    "StyleType.Index",
+    "SubType.Index",
+    "Health.Maximum",
+    "Health.Current",
+    "Move.MovementModel",
+    "Move.XY.MoveSpeed",
+    "Move.XY.MoveAcceleration",
+    "Move.XY.AcceptanceRadius",
+    "Attack.bEnable",
+    "Attack.Range",
+    "Attack.CoolDown",
+    "Attack.DurationPerRound",
+    "Damage.Damage",
+    "Damage.DmgRadius",
+    "Defence.NormalDmgImmune",
+    "Collider.Radius",
+    "Collider.Height",
+    "Collider.Mass"
+  ],
+  "organization": {
+    "target_root": "/Game/Unit/Actor",
+    "trash_root": "/Game/_Trash/MassBattle/Units",
+    "families": {
+      "infantry": {
+        "folder": "Army/Soldier",
+        "keywords": ["soldier", "infantry", "human", "japan", "soviet", "china", "chinese", "brit", "german", "us", "ww2", "toon"]
+      },
+      "officer": {
+        "folder": "Army/Officer",
+        "keywords": ["officer", "commander", "leader"]
+      },
+      "armored": {
+        "folder": "Army/Tank",
+        "keywords": ["tank", "apc", "vehicle"]
+      },
+      "air": {
+        "folder": "Aircraft",
+        "keywords": ["helicopter", "fighter", "jet", "aircraft"]
+      },
+      "building": {
+        "folder": "Building",
+        "keywords": ["camp", "spawner", "building", "city", "flag"]
+      }
+    }
+  },
+  "authoring_defaults": {
+    "recipe_id": "vat_skeletal_unit",
+    "source_folder_name": "Source_{asset_slug}",
+    "generated_folder_name": "Gen_{asset_slug}",
+    "unit_asset_prefix": "AgentConfig_",
+    "renderer_prefix": "Renderer_",
+    "static_mesh_prefix": "SM_",
+    "vat_data_prefix": "VAT_",
+    "material_prefix": "",
+    "animation_search_roots": [
+      "/Game/Unit",
+      "/Game/Toon_Soldiers_WW2/Animations",
+      "/Game/StylizedArmyPackA/Soldiers_Animations",
+      "/Game/StylizedArmyPackA/Flags_Actors",
+      "/MassBattle/Demo",
+      "/MassBattle/Test"
+    ]
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "id": "vat_skeletal_unit",
+  "display_name": "VAT Skeletal Mesh Unit",
+  "description": "Create or refresh a MassBattle unit from a purchased skeletal mesh using the existing MassBattle editor conversion pipeline.",
+  "style_profile": "default",
+  "input_schema": {
+    "template_unit": "Existing UMassBattleAgentConfigDataAsset used as the base unit.",
+    "skeletal_mesh": "Purchased USkeletalMesh asset path.",
+    "asset_slug": "Stable unit slug used for generated asset names.",
+    "family": "Optional organization family from the style profile.",
+    "animation_search_path": "Path used by FindAndFillAnimSequences.",
+    "texture_search_path": "Path used by FindAndFillOriginalTextures.",
+    "parent_material": "Optional parent material for generated material instances.",
+    "material_overrides": "Optional array of material paths or {slot_index, slot_name, slot_name_contains, material} objects applied to the generated StaticMesh after material instance generation.",
+    "source_renderer_class": "Renderer Blueprint generated class used as the template when duplicating a renderer.",
+    "niagara_system": "Optional Niagara system assigned to the renderer defaults.",
+    "unit_patch": "Union-merge patch applied to the cloned or target unit DataAsset.",
+    "output_root": "Optional override for generated content root."
+  },
+  "pipeline": [
+    {
+      "id": "organize_paths",
+      "tool": "style.resolve_output_layout",
+      "description": "Resolve output folders and naming from the selected unit management style."
+    },
+    {
+      "id": "find_textures",
+      "tool": "MCP_FindAndFillOriginalTextures",
+      "description": "Find source textures from the purchased skeletal mesh material slots."
+    },
+    {
+      "id": "find_animations",
+      "tool": "MCP_FindAndFillAnimSequences",
+      "description": "Find animation sequences that share the mesh skeleton."
+    },
+    {
+      "id": "convert_mesh",
+      "tool": "MCP_ConvertSkeletalMeshToStaticMeshWithLODs",
+      "description": "Convert the skeletal mesh to MassBattle static mesh LODs."
+    },
+    {
+      "id": "create_materials",
+      "tool": "MCP_CreateMaterialInstanceForStaticMeshWithLODs",
+      "description": "Create material instances for generated static mesh LODs."
+    },
+    {
+      "id": "apply_material_overrides",
+      "tool": "MCP_EditorApplyCreateVatUnit.material_overrides",
+      "description": "Override generated StaticMesh material slots with explicit materials when a skin package should replace the source mesh materials."
+    },
+    {
+      "id": "create_anim_data",
+      "tool": "MCP_CreateAnimsDataFromSequences",
+      "description": "Convert found animation sequences into FAnimsData for AnimShared."
+    },
+    {
+      "id": "merge_unit_data",
+      "tool": "MCP_UnitPlanMergeUpdate",
+      "description": "Union-merge generated Visualize, LODShared, AnimShared, and balance defaults into the target unit."
+    }
+  ],
+  "default_unit_patch": {
+    "Data": {
+      "Visualize": {
+        "Transform": {
+          "Scale3D": {
+            "X": 1,
+            "Y": 1,
+            "Z": 1
+          }
+        }
+      }
+    }
+  }
+}

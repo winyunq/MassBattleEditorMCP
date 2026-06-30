@@ -176,7 +176,7 @@ TSharedRef<SWidget> SMcpToolItem::CreateKeyValueTable(const FString& InJson, boo
 		int32 RowIndex = 0;
 		for (const auto& Pair : JsonObj->Values)
 		{
-			FString Key = Pair.Key;
+			FString Key = FString(Pair.Key.ToView());
 			FString Value;
 
 			if (Pair.Value.IsValid())

@@ -7,6 +7,7 @@ public class ChatWithUnreal : ModuleRules
 {
 	public ChatWithUnreal(ReadOnlyTargetRules Target) : base(Target)
 	{
+		bUseUnity = false;
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 
 		PublicIncludePaths.AddRange(
