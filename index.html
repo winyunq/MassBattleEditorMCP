@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MassBattleEditorMCP 文档中心</title>
+  <meta name="description" content="MassBattleEditorMCP 中文文档站，支持 order 流程与 API 文档浏览。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js" defer></script>
+  <script src="./viewer.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <p class="eyebrow">MassBattleEditorMCP</p>
+      <h1>中文文档中心</h1>
+      <p class="subtitle">统一承载 MCP 文档、流程与 API 指南，支持快速检索、分页和代码高亮。</p>
+      <div class="chips">
+        <span>中文优先</span>
+        <span>网页可读</span>
+        <span>可快速检索</span>
+        <span>可本地部署</span>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="panel side">
+        <label class="search-wrap" for="docSearch">
+          <input id="docSearch" placeholder="搜索文档标题（中文）" />
+        </label>
+        <nav id="toc" aria-label="文档目录"></nav>
+      </aside>
+
+      <section class="panel content">
+        <div class="toolbar">
+          <strong id="activeTitle">加载中...</strong>
+          <a id="rawLink" class="raw-link" href="#" target="_blank" rel="noopener noreferrer">在 GitHub 查看 Markdown</a>
+        </div>
+        <article id="docContent" class="markdown-body">载入文档中...</article>
+        <p id="errorTip" class="error hidden"></p>
+      </section>
+    </main>
+  </div>
+
+  <footer class="footer">
+    <div>本页面为文档入口，不包含可执行代码。</div>
+    <div>建议通过 `python -m http.server` 或 GitHub Pages 访问，避免直接 file:// 导致的加载限制。</div>
+  </footer>
+
+  <template id="docTemplate">
+    <button class="doc-item" type="button"></button>
+  </template>
+</body>
+</html>
+
