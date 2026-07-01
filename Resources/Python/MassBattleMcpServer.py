@@ -1,0 +1,314 @@
+import asyncio
+import json
+import logging
+import sys
+from contextlib import asynccontextmanager
+from typing import Any, AsyncIterator, Dict, Optional
+
+from mcp.server.fastmcp import FastMCP
+
+from mcp_config import SOCKET_TIMEOUT, UNREAL_HOST, UNREAL_PORT
+
+try:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(line_buffering=True)
+except Exception:
+    pass
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("massbattle_mcp_server.log")],
+)
+logger = logging.getLogger("MassBattleMcpServer")
+
+
+def _json_arg(value: Any, default: str = "{}") -> str:
+    if value is None:
+        return default
+    if isinstance(value, str):
+        return value if value.strip() else default
+    return json.dumps(value, ensure_ascii=False)
+
+
+class UnrealConnection:
+    async def send_command(self, command: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        try:
+            reader, writer = await asyncio.wait_for(
+                asyncio.open_connection(UNREAL_HOST, UNREAL_PORT),
+                timeout=SOCKET_TIMEOUT,
+            )
+        except Exception as exc:
+            return {
+                "success": False,
+                "error": f"Could not connect to MassBattleEditorMCP bridge at {UNREAL_HOST}:{UNREAL_PORT}: {exc}",
+            }
+
+        try:
+            message = json.dumps({"command": command, "params": params or {}}, ensure_ascii=False)
+            writer.write(message.encode("utf-8") + b"\0")
+            await writer.drain()
+            if writer.can_write_eof():
+                writer.write_eof()
+
+            chunks = []
+            while True:
+                chunk = await asyncio.wait_for(reader.read(4096), timeout=SOCKET_TIMEOUT)
+                if not chunk:
+                    break
+                if b"\0" in chunk:
+                    chunks.append(chunk[: chunk.find(b"\0")])
+                    break
+                chunks.append(chunk)
+
+            payload = b"".join(chunks).decode("utf-8")
+            if not payload:
+                return {"success": False, "error": "Empty response from Unreal MassBattleEditorMCP bridge."}
+            return json.loads(payload)
+        except Exception as exc:
+            logger.exception("MassBattle MCP command failed: %s", command)
+            return {"success": False, "error": str(exc), "command": command}
+        finally:
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except Exception:
+                pass
+
+
+_unreal_connection: Optional[UnrealConnection] = None
+
+
+def get_connection() -> UnrealConnection:
+    global _unreal_connection
+    if _unreal_connection is None:
+        _unreal_connection = UnrealConnection()
+    return _unreal_connection
+
+
+@asynccontextmanager
+async def server_lifespan(server: FastMCP) -> AsyncIterator[Dict[str, Any]]:
+    get_connection()
+    yield {}
+
+
+mcp = FastMCP("MassBattleEditorMCP", lifespan=server_lifespan)
+
+
+@mcp.tool()
+async def massbattle_ping() -> Dict[str, Any]:
+    """Check whether the Unreal MassBattleEditorMCP bridge is reachable."""
+    return await get_connection().send_command("ping")
+
+
+@mcp.tool()
+async def unit_get_api_status() -> Dict[str, Any]:
+    """List Unit MCP API capabilities from Unreal."""
+    return await get_connection().send_command("MCP_UnitGetApiStatus")
+
+
+@mcp.tool()
+async def unit_list(options: Any = None) -> Dict[str, Any]:
+    """List MassBattle unit config assets."""
+    return await get_connection().send_command("MCP_UnitList", {"OptionsJson": _json_arg(options)})
+
+
+@mcp.tool()
+async def unit_get(unit_path: str, options: Any = None) -> Dict[str, Any]:
+    """Read a MassBattle unit config asset."""
+    return await get_connection().send_command(
+        "MCP_UnitGet",
+        {"UnitPath": unit_path, "OptionsJson": _json_arg(options)},
+    )
+
+
+@mcp.tool()
+async def unit_get_schema(options: Any = None) -> Dict[str, Any]:
+    """Read editable MassBattle unit schema information."""
+    return await get_connection().send_command("MCP_UnitGetSchema", {"OptionsJson": _json_arg(options)})
+
+
+@mcp.tool()
+async def unit_plan_merge_update(unit_path: str, unit_data: Any) -> Dict[str, Any]:
+    """Create a non-destructive union-merge plan for a MassBattle unit."""
+    return await get_connection().send_command(
+        "MCP_UnitPlanMergeUpdate",
+        {"UnitPath": unit_path, "UnitDataJson": _json_arg(unit_data)},
+    )
+
+
+@mcp.tool()
+async def unit_preview_diff(plan_id: str) -> Dict[str, Any]:
+    """Read the diff for a saved MassBattle unit plan."""
+    return await get_connection().send_command("MCP_UnitPreviewDiff", {"PlanId": plan_id})
+
+
+@mcp.tool()
+async def unit_apply_plan(plan_id: str, save_assets: bool = True) -> Dict[str, Any]:
+    """Apply a reviewed MassBattle unit plan."""
+    return await get_connection().send_command(
+        "MCP_UnitApplyPlan",
+        {"PlanId": plan_id, "bSaveAssets": save_assets},
+    )
+
+
+@mcp.tool()
+async def unit_find_assets(query: Any) -> Dict[str, Any]:
+    """Find project assets useful for MassBattle unit authoring."""
+    return await get_connection().send_command("MCP_UnitFindAssets", {"QueryJson": _json_arg(query)})
+
+
+@mcp.tool()
+async def editor_get_status() -> Dict[str, Any]:
+    """List MassBattle unit editor workflow capabilities."""
+    return await get_connection().send_command("MCP_EditorGetStatus")
+
+
+@mcp.tool()
+async def editor_list_profiles(options: Any = None) -> Dict[str, Any]:
+    """List MassBattle unit style profiles and authoring recipes."""
+    return await get_connection().send_command("MCP_EditorListProfiles", {"OptionsJson": _json_arg(options)})
+
+
+@mcp.tool()
+async def editor_get_profile(profile_type: str, profile_id: str) -> Dict[str, Any]:
+    """Read one MassBattle unit style profile or recipe."""
+    return await get_connection().send_command(
+        "MCP_EditorGetProfile",
+        {"ProfileType": profile_type, "ProfileId": profile_id},
+    )
+
+
+@mcp.tool()
+async def effect_asset_get_api_status() -> Dict[str, Any]:
+    """List generic MassBattle effect asset API capabilities."""
+    return await get_connection().send_command("MCP_EffectAssetGetApiStatus")
+
+
+@mcp.tool()
+async def effect_asset_query(query: Any) -> Dict[str, Any]:
+    """Query Niagara, Cascade, material, Blueprint, and related visual effect assets."""
+    return await get_connection().send_command("MCP_EffectAssetQuery", {"QueryJson": _json_arg(query)})
+
+
+@mcp.tool()
+async def effect_asset_read_summary(asset_path: str, options: Any = None) -> Dict[str, Any]:
+    """Read a typed summary for an effect-related asset."""
+    return await get_connection().send_command(
+        "MCP_EffectAssetReadSummary",
+        {"AssetPath": asset_path, "OptionsJson": _json_arg(options)},
+    )
+
+
+@mcp.tool()
+async def effect_asset_export_text(asset_path: str, options: Any = None) -> Dict[str, Any]:
+    """Export deterministic text for an effect-related asset."""
+    return await get_connection().send_command(
+        "MCP_EffectAssetExportText",
+        {"AssetPath": asset_path, "OptionsJson": _json_arg(options)},
+    )
+
+
+@mcp.tool()
+async def effect_duplicate_asset(source_asset_path: str, new_asset_name: str, package_path: str, save_assets: bool = True) -> Dict[str, Any]:
+    """Duplicate an effect-related asset additively."""
+    return await get_connection().send_command(
+        "MCP_EffectDuplicateAsset",
+        {
+            "SourceAssetPath": source_asset_path,
+            "NewAssetName": new_asset_name,
+            "PackagePath": package_path,
+            "bSaveAssets": save_assets,
+        },
+    )
+
+
+@mcp.tool()
+async def batch_fx_set_renderer_defaults(
+    target_class_path: str,
+    niagara_system_path: str,
+    ndc_burst_fx_path: str,
+    subtype: int,
+    render_batch_size: int = 2048,
+    pooling_cooldown: float = 3.0,
+    save_assets: bool = True,
+) -> Dict[str, Any]:
+    """Set AMassBattleFxRenderer Blueprint CDO defaults for a batched FX subtype."""
+    return await get_connection().send_command(
+        "MCP_BatchFxSetRendererDefaults",
+        {
+            "TargetClassPath": target_class_path,
+            "NiagaraSystemPath": niagara_system_path,
+            "NdcBurstFxPath": ndc_burst_fx_path,
+            "SubType": subtype,
+            "RenderBatchSize": render_batch_size,
+            "PoolingCooldown": pooling_cooldown,
+            "bSaveAssets": save_assets,
+        },
+    )
+
+
+@mcp.tool()
+async def niagara_get_api_status() -> Dict[str, Any]:
+    """List Niagara MCP API capabilities."""
+    return await get_connection().send_command("MCP_NiagaraGetApiStatus")
+
+
+@mcp.tool()
+async def niagara_query(query: Any) -> Dict[str, Any]:
+    """Query Niagara systems by path or name text."""
+    return await get_connection().send_command("MCP_NiagaraQuery", {"QueryJson": _json_arg(query)})
+
+
+@mcp.tool()
+async def niagara_read_summary(system_path: str, options: Any = None) -> Dict[str, Any]:
+    """Read a Niagara system summary."""
+    return await get_connection().send_command(
+        "MCP_NiagaraReadSummary",
+        {"SystemPath": system_path, "OptionsJson": _json_arg(options)},
+    )
+
+
+@mcp.tool()
+async def niagara_read_module(system_path: str, selector: Any) -> Dict[str, Any]:
+    """Read one Niagara module node and pins."""
+    return await get_connection().send_command(
+        "MCP_NiagaraReadModule",
+        {"SystemPath": system_path, "SelectorJson": _json_arg(selector)},
+    )
+
+
+@mcp.tool()
+async def niagara_export_text(system_path: str, options: Any = None) -> Dict[str, Any]:
+    """Export deterministic Niagara text for close reading."""
+    return await get_connection().send_command(
+        "MCP_NiagaraExportText",
+        {"SystemPath": system_path, "OptionsJson": _json_arg(options)},
+    )
+
+
+@mcp.tool()
+async def niagara_merge_write(system_path: str, patch: Any, save_assets: bool = False) -> Dict[str, Any]:
+    """Union-merge Niagara property writes. This does not delete."""
+    return await get_connection().send_command(
+        "MCP_NiagaraMergeWrite",
+        {"SystemPath": system_path, "PatchJson": _json_arg(patch), "bSaveAssets": save_assets},
+    )
+
+
+@mcp.tool()
+async def niagara_delete(system_path: str, delete_spec: Any, save_assets: bool = False) -> Dict[str, Any]:
+    """Run explicit Niagara delete operations such as renderer or user-parameter removal."""
+    return await get_connection().send_command(
+        "MCP_NiagaraDelete",
+        {"SystemPath": system_path, "DeleteJson": _json_arg(delete_spec), "bSaveAssets": save_assets},
+    )
+
+
+if __name__ == "__main__":
+    try:
+        logger.info("Starting MassBattleEditorMCP server on stdio; Unreal bridge target %s:%s", UNREAL_HOST, UNREAL_PORT)
+        mcp.run(transport="stdio")
+    except Exception as exc:
+        logger.exception("MassBattleEditorMCP server failed to start: %s", exc)
+        print("MASSBATTLE_MCP_SERVER_START_FAILED")

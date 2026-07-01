@@ -2,6 +2,8 @@
 
 #define LOCTEXT_NAMESPACE "FMassBattleEditorMCPModule"
 
+DEFINE_LOG_CATEGORY(LogMassBattleEditorMCP);
+
 void FMassBattleEditorMCPModule::StartupModule()
 {
 }

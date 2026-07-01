@@ -3,6 +3,8 @@
 #include "CoreMinimal.h"
 #include "Modules/ModuleManager.h"
 
+DECLARE_LOG_CATEGORY_EXTERN(LogMassBattleEditorMCP, Log, All);
+
 class FMassBattleEditorMCPModule : public IModuleInterface
 {
 public:

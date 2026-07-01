@@ -35,6 +35,7 @@ public class MassBattleEditorMCP : ModuleRules
 				"Slate",
 				"SlateCore",
 				"UnrealEd",
+				"EditorSubsystem",
 				"Niagara",
 				"NiagaraEditor",
 				"AnimToTexture",
@@ -46,7 +47,9 @@ public class MassBattleEditorMCP : ModuleRules
 				"MeshDescription",
 				"StaticMeshDescription",
 				"Json",
-				"JsonUtilities"
+				"JsonUtilities",
+				"Sockets",
+				"Networking"
 			}
 		);
 	}

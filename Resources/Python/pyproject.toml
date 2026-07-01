@@ -1,0 +1,8 @@
+[project]
+name = "massbattle-editor-mcp-server"
+version = "0.1.0"
+description = "Codex MCP bridge for MassBattleEditorMCP Unreal tools"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.0.0",
+]

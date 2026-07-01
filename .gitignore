@@ -4,6 +4,9 @@ DerivedDataCache/
 Saved/
 .vs/
 .vscode/
+.venv/
+__pycache__/
+Resources/Python/*.log
 *.sln
 *.slnx
 *.suo

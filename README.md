@@ -51,6 +51,30 @@ Copy-Item -Recurse -Force .\skills\massbattle-effect-mcp $env:USERPROFILE\.codex
 如果设置了 `CODEX_HOME`，则复制到 `$env:CODEX_HOME\skills\`。  
 MCP 是编辑器工具接口，skill 只描述如何组合这些工具，不把 workflow 写成一个大按钮。
 
+### Codex MCP Server 安装
+
+MassBattleEditorMCP 的 Codex 入口由两层组成：
+
+1. UE 编辑器插件内的本地 TCP bridge：默认监听 `127.0.0.1:55558`。
+2. `Resources/Python/MassBattleMcpServer.py`：STDIO MCP server，把 Codex tool call 转发给 UE bridge。
+
+安装到 Codex：
+
+```powershell
+.\Scripts\Install-CodexMassBattleMCP.ps1
+```
+
+快速检查安装和 UE bridge：
+
+```powershell
+.\Scripts\QuickStart-CodexMassBattleMCP.ps1
+```
+
+安装后需要重启 Codex 或新开会话；UE 编辑器也需要加载本插件，bridge 才会开始监听。
+安装成功后应能看到 `massbattle-editor-mcp`，并可调用 `unit_get`、`unit_plan_merge_update`、`unit_apply_plan`、`effect_asset_read_summary`、`batch_fx_set_renderer_defaults` 等原语工具。
+
+注意：`FFxConfig.AgentBehaviorState` 使用的是 `EAgentBehaviorState`，可写值包括 `None`、`Appearing`、`Sleeping`、`Patrolling`、`Attacking`、`Hit`、`Dying`。受击 FX 应写 `Hit`，不要把运行时 flag 名 `BeingHit` 写进这个字段。
+
 ## MCP 功能清单
 
 单位查询与读取：读取单位对象和字段快照  
