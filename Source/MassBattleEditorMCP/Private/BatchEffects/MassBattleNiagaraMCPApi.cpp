@@ -683,6 +683,7 @@ FString UMassBattleNiagaraMCPApi::MCP_NiagaraGetApiStatus()
 	Tools.Add(Tool(TEXT("MCP_NiagaraReadAll"), TEXT("niagara.read"), TEXT("Read full reflected Niagara data plus all module nodes."), TEXT("SystemPath, OptionsJson")));
 	Tools.Add(Tool(TEXT("MCP_NiagaraExportText"), TEXT("niagara.text"), TEXT("Write a deterministic text dump for LLM reading."), TEXT("SystemPath, OptionsJson")));
 	Tools.Add(Tool(TEXT("MCP_NiagaraMergeWrite"), TEXT("niagara.write"), TEXT("Union-merge property writes on system/emitter_data/renderer targets; never deletes."), TEXT("SystemPath, PatchJson, bSaveAssets")));
+	Tools.Add(Tool(TEXT("MCP_NiagaraSetEmitterEnabled"), TEXT("niagara.write"), TEXT("Set one emitter handle enabled state explicitly."), TEXT("SystemPath, EmitterName, bEnabled, bSaveAssets")));
 	Tools.Add(Tool(TEXT("MCP_NiagaraDelete"), TEXT("niagara.delete"), TEXT("Explicit destructive operations such as renderer removal or user-parameter removal."), TEXT("SystemPath, DeleteJson, bSaveAssets")));
 	Root->SetArrayField(TEXT("tools"), Tools);
 	return ToJsonString(Root);
@@ -1025,6 +1026,52 @@ FString UMassBattleNiagaraMCPApi::MCP_NiagaraMergeWrite(const FString& SystemPat
 	Root->SetStringField(TEXT("system"), System->GetPathName());
 	Root->SetBoolField(TEXT("saved"), bSaved);
 	Root->SetArrayField(TEXT("results"), Results);
+	return ToJsonString(Root);
+}
+
+FString UMassBattleNiagaraMCPApi::MCP_NiagaraSetEmitterEnabled(const FString& SystemPath, const FString& EmitterName, bool bEnabled, bool bSaveAssets)
+{
+	using namespace MassBattleNiagaraMCP;
+
+	FString LoadError;
+	UNiagaraSystem* System = LoadSystem(SystemPath, LoadError);
+	if (!System)
+	{
+		return MakeErrorJson(LoadError);
+	}
+
+	FNiagaraEmitterHandle* Handle = nullptr;
+	if (!FindEmitterHandle(System, EmitterName, Handle) || !Handle)
+	{
+		return MakeErrorJson(FString::Printf(TEXT("Emitter not found: %s"), *EmitterName));
+	}
+
+	const bool bBefore = Handle->GetIsEnabled();
+	const bool bChanged = Handle->SetIsEnabled(bEnabled, *System, true);
+	const bool bAfter = Handle->GetIsEnabled();
+	if (bChanged)
+	{
+		System->MarkPackageDirty();
+	}
+
+	FString SaveError;
+	bool bSaved = false;
+	if (bSaveAssets && bChanged)
+	{
+		bSaved = SaveAsset(System, SaveError);
+		if (!bSaved)
+		{
+			return MakeErrorJson(SaveError);
+		}
+	}
+
+	TSharedPtr<FJsonObject> Root = MakeSuccessObject();
+	Root->SetStringField(TEXT("system"), System->GetPathName());
+	Root->SetStringField(TEXT("emitter"), Handle->GetName().ToString());
+	Root->SetBoolField(TEXT("before"), bBefore);
+	Root->SetBoolField(TEXT("after"), bAfter);
+	Root->SetBoolField(TEXT("changed"), bChanged);
+	Root->SetBoolField(TEXT("saved"), bSaved);
 	return ToJsonString(Root);
 }
 

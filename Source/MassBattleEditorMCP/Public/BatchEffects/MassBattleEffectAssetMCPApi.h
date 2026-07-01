@@ -36,5 +36,8 @@ public:
 	static FString MCP_EffectDuplicateAsset(const FString& SourceAssetPath, const FString& NewAssetName, const FString& PackagePath, bool bSaveAssets);
 
 	UFUNCTION(BlueprintCallable, Category = "MassBattleEditorMCP|BatchEffects")
+	static FString MCP_BatchFxReadRendererDefaults(const FString& TargetClassPath);
+
+	UFUNCTION(BlueprintCallable, Category = "MassBattleEditorMCP|BatchEffects")
 	static FString MCP_BatchFxSetRendererDefaults(const FString& TargetClassPath, const FString& NiagaraSystemPath, const FString& NdcBurstFxPath, int32 SubType, int32 RenderBatchSize, float PoolingCooldown, bool bSaveAssets);
 };

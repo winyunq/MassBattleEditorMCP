@@ -488,6 +488,33 @@ static UClass* LoadFxRendererClass(const FString& TargetClassPath, FString& OutE
 	}
 	return TargetClass;
 }
+
+static TSharedPtr<FJsonObject> FxRendererDefaultsToJson(const UClass* TargetClass, const AMassBattleFxRenderer* CDO)
+{
+	TSharedPtr<FJsonObject> Obj = MakeShared<FJsonObject>();
+	if (!TargetClass || !CDO)
+	{
+		return Obj;
+	}
+
+	Obj->SetStringField(TEXT("class_path"), TargetClass->GetPathName());
+	Obj->SetStringField(TEXT("blueprint_asset"), TEXT(""));
+	if (const UBlueprintGeneratedClass* BPClass = Cast<UBlueprintGeneratedClass>(TargetClass))
+	{
+		if (const UBlueprint* Blueprint = Cast<UBlueprint>(BPClass->ClassGeneratedBy))
+		{
+			Obj->SetStringField(TEXT("blueprint_asset"), Blueprint->GetPathName());
+		}
+	}
+	Obj->SetStringField(TEXT("cdo_path"), CDO->GetPathName());
+	Obj->SetStringField(TEXT("niagara_system"), CDO->NiagaraSystemAsset ? CDO->NiagaraSystemAsset->GetPathName() : TEXT(""));
+	Obj->SetStringField(TEXT("ndc_burst_fx"), CDO->NDC_BurstFx ? CDO->NDC_BurstFx->GetPathName() : TEXT(""));
+	Obj->SetNumberField(TEXT("subtype"), CDO->SubType.Index);
+	Obj->SetNumberField(TEXT("render_batch_size"), CDO->RenderBatchSize);
+	Obj->SetNumberField(TEXT("pooling_cooldown"), CDO->PoollingCoolDown);
+	Obj->SetStringField(TEXT("edit_scope"), TEXT("blueprint_class_defaults"));
+	return Obj;
+}
 }
 
 FString UMassBattleEffectAssetMCPApi::MCP_EffectAssetGetApiStatus()
@@ -514,6 +541,7 @@ FString UMassBattleEffectAssetMCPApi::MCP_EffectAssetGetApiStatus()
 	Tools.Add(Tool(TEXT("MCP_EffectAssetReadSummary"), TEXT("effect_asset.read"), TEXT("Read a typed summary for Niagara, Cascade, material, Blueprint, or generic assets."), TEXT("AssetPath, OptionsJson")));
 	Tools.Add(Tool(TEXT("MCP_EffectAssetExportText"), TEXT("effect_asset.text"), TEXT("Write a deterministic text dump for close reading."), TEXT("AssetPath, OptionsJson")));
 	Tools.Add(Tool(TEXT("MCP_EffectDuplicateAsset"), TEXT("effect_asset.write"), TEXT("Duplicate an arbitrary asset into a package path."), TEXT("SourceAssetPath, NewAssetName, PackagePath, bSaveAssets")));
+	Tools.Add(Tool(TEXT("MCP_BatchFxReadRendererDefaults"), TEXT("batch_fx.read"), TEXT("Read AMassBattleFxRenderer Blueprint CDO defaults used by newly placed actors."), TEXT("TargetClassPath")));
 	Tools.Add(Tool(TEXT("MCP_BatchFxSetRendererDefaults"), TEXT("batch_fx.write"), TEXT("Set AMassBattleFxRenderer Blueprint CDO defaults: Niagara, NDC_BurstFx, SubType, batch size, and pooling cooldown."), TEXT("TargetClassPath, NiagaraSystemPath, NdcBurstFxPath, SubType, RenderBatchSize, PoolingCooldown, bSaveAssets")));
 	Root->SetArrayField(TEXT("tools"), Tools);
 	return ToJsonString(Root);
@@ -713,6 +741,28 @@ FString UMassBattleEffectAssetMCPApi::MCP_EffectDuplicateAsset(const FString& So
 	Root->SetStringField(TEXT("asset_path"), NewAsset->GetPathName());
 	Root->SetStringField(TEXT("package"), NewAsset->GetOutermost() ? NewAsset->GetOutermost()->GetName() : TEXT(""));
 	Root->SetBoolField(TEXT("saved"), bSaved);
+	return ToJsonString(Root);
+}
+
+FString UMassBattleEffectAssetMCPApi::MCP_BatchFxReadRendererDefaults(const FString& TargetClassPath)
+{
+	using namespace MassBattleEffectAssetMCP;
+
+	FString ClassError;
+	UClass* TargetClass = LoadFxRendererClass(TargetClassPath, ClassError);
+	if (!TargetClass)
+	{
+		return MakeErrorJson(ClassError);
+	}
+
+	AMassBattleFxRenderer* CDO = TargetClass->GetDefaultObject<AMassBattleFxRenderer>();
+	if (!CDO)
+	{
+		return MakeErrorJson(TEXT("Failed to get AMassBattleFxRenderer CDO"));
+	}
+
+	TSharedPtr<FJsonObject> Root = MakeSuccessObject();
+	Root->SetObjectField(TEXT("defaults"), FxRendererDefaultsToJson(TargetClass, CDO));
 	return ToJsonString(Root);
 }
 

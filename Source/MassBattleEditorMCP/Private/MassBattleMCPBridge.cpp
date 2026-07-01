@@ -254,6 +254,7 @@ FString UMassBattleMCPBridge::InternalExecuteCommand(const FString& CommandType,
 	if (CommandType == TEXT("MCP_EffectAssetReadSummary")) { return UMassBattleEffectAssetMCPApi::MCP_EffectAssetReadSummary(StringParam(Params, TEXT("AssetPath")), JsonParam(Params, TEXT("OptionsJson"))); }
 	if (CommandType == TEXT("MCP_EffectAssetExportText")) { return UMassBattleEffectAssetMCPApi::MCP_EffectAssetExportText(StringParam(Params, TEXT("AssetPath")), JsonParam(Params, TEXT("OptionsJson"))); }
 	if (CommandType == TEXT("MCP_EffectDuplicateAsset")) { return UMassBattleEffectAssetMCPApi::MCP_EffectDuplicateAsset(StringParam(Params, TEXT("SourceAssetPath")), StringParam(Params, TEXT("NewAssetName")), StringParam(Params, TEXT("PackagePath")), BoolParam(Params, TEXT("bSaveAssets"))); }
+	if (CommandType == TEXT("MCP_BatchFxReadRendererDefaults")) { return UMassBattleEffectAssetMCPApi::MCP_BatchFxReadRendererDefaults(StringParam(Params, TEXT("TargetClassPath"))); }
 	if (CommandType == TEXT("MCP_BatchFxSetRendererDefaults")) { return UMassBattleEffectAssetMCPApi::MCP_BatchFxSetRendererDefaults(StringParam(Params, TEXT("TargetClassPath")), StringParam(Params, TEXT("NiagaraSystemPath")), StringParam(Params, TEXT("NdcBurstFxPath")), IntParam(Params, TEXT("SubType")), IntParam(Params, TEXT("RenderBatchSize")), FloatParam(Params, TEXT("PoolingCooldown")), BoolParam(Params, TEXT("bSaveAssets"))); }
 
 	if (CommandType == TEXT("MCP_NiagaraGetApiStatus")) { return UMassBattleNiagaraMCPApi::MCP_NiagaraGetApiStatus(); }
@@ -263,6 +264,7 @@ FString UMassBattleMCPBridge::InternalExecuteCommand(const FString& CommandType,
 	if (CommandType == TEXT("MCP_NiagaraReadAll")) { return UMassBattleNiagaraMCPApi::MCP_NiagaraReadAll(StringParam(Params, TEXT("SystemPath")), JsonParam(Params, TEXT("OptionsJson"))); }
 	if (CommandType == TEXT("MCP_NiagaraExportText")) { return UMassBattleNiagaraMCPApi::MCP_NiagaraExportText(StringParam(Params, TEXT("SystemPath")), JsonParam(Params, TEXT("OptionsJson"))); }
 	if (CommandType == TEXT("MCP_NiagaraMergeWrite")) { return UMassBattleNiagaraMCPApi::MCP_NiagaraMergeWrite(StringParam(Params, TEXT("SystemPath")), JsonParam(Params, TEXT("PatchJson")), BoolParam(Params, TEXT("bSaveAssets"))); }
+	if (CommandType == TEXT("MCP_NiagaraSetEmitterEnabled")) { return UMassBattleNiagaraMCPApi::MCP_NiagaraSetEmitterEnabled(StringParam(Params, TEXT("SystemPath")), StringParam(Params, TEXT("EmitterName")), BoolParam(Params, TEXT("bEnabled")), BoolParam(Params, TEXT("bSaveAssets"))); }
 	if (CommandType == TEXT("MCP_NiagaraDelete")) { return UMassBattleNiagaraMCPApi::MCP_NiagaraDelete(StringParam(Params, TEXT("SystemPath")), JsonParam(Params, TEXT("DeleteJson")), BoolParam(Params, TEXT("bSaveAssets"))); }
 
 	if (CommandType == TEXT("MCP_DuplicateClassAsset")) { return UMassBattleEditorMCPApi::MCP_DuplicateClassAsset(StringParam(Params, TEXT("SourceClassPath")), StringParam(Params, TEXT("NewClassName")), StringParam(Params, TEXT("PackagePath"))); }

@@ -224,6 +224,15 @@ async def effect_duplicate_asset(source_asset_path: str, new_asset_name: str, pa
 
 
 @mcp.tool()
+async def batch_fx_read_renderer_defaults(target_class_path: str) -> Dict[str, Any]:
+    """Read AMassBattleFxRenderer Blueprint class defaults used by newly placed actors."""
+    return await get_connection().send_command(
+        "MCP_BatchFxReadRendererDefaults",
+        {"TargetClassPath": target_class_path},
+    )
+
+
+@mcp.tool()
 async def batch_fx_set_renderer_defaults(
     target_class_path: str,
     niagara_system_path: str,
@@ -293,6 +302,20 @@ async def niagara_merge_write(system_path: str, patch: Any, save_assets: bool = 
     return await get_connection().send_command(
         "MCP_NiagaraMergeWrite",
         {"SystemPath": system_path, "PatchJson": _json_arg(patch), "bSaveAssets": save_assets},
+    )
+
+
+@mcp.tool()
+async def niagara_set_emitter_enabled(system_path: str, emitter_name: str, enabled: bool, save_assets: bool = True) -> Dict[str, Any]:
+    """Explicitly enable or disable one Niagara emitter handle."""
+    return await get_connection().send_command(
+        "MCP_NiagaraSetEmitterEnabled",
+        {
+            "SystemPath": system_path,
+            "EmitterName": emitter_name,
+            "bEnabled": enabled,
+            "bSaveAssets": save_assets,
+        },
     )
 
 

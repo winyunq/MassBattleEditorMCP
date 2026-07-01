@@ -71,7 +71,7 @@ MassBattleEditorMCP 的 Codex 入口由两层组成：
 ```
 
 安装后需要重启 Codex 或新开会话；UE 编辑器也需要加载本插件，bridge 才会开始监听。
-安装成功后应能看到 `massbattle-editor-mcp`，并可调用 `unit_get`、`unit_plan_merge_update`、`unit_apply_plan`、`effect_asset_read_summary`、`batch_fx_set_renderer_defaults` 等原语工具。
+安装成功后应能看到 `massbattle-editor-mcp`，并可调用 `unit_get`、`unit_plan_merge_update`、`unit_apply_plan`、`effect_asset_read_summary`、`batch_fx_read_renderer_defaults`、`batch_fx_set_renderer_defaults` 等原语工具。
 
 注意：`FFxConfig.AgentBehaviorState` 使用的是 `EAgentBehaviorState`，可写值包括 `None`、`Appearing`、`Sleeping`、`Patrolling`、`Attacking`、`Hit`、`Dying`。受击 FX 应写 `Hit`，不要把运行时 flag 名 `BeingHit` 写进这个字段。
 
@@ -114,10 +114,12 @@ MassBattleEditorMCP 的 Codex 入口由两层组成：
 - `niagara_read_module`：精读指定 Niagara module 节点和 pin。
 - `niagara_export_text`：导出 Niagara 确定性文本。
 - `niagara_merge_write`：并集写 Niagara 属性，不负责删除。
+- `niagara_set_emitter_enabled`：显式启用或禁用一个 Niagara emitter handle。
 - `niagara_delete`：显式删除 renderer、user parameter、禁用 emitter 等。
 
 ### Batch FX MCP
 
+- `batch_fx_read_renderer_defaults`：读取 `AMassBattleFxRenderer` 蓝图默认值；这些默认值会被之后拖进关卡的新 Actor 实例继承。
 - `batch_fx_set_renderer_defaults`：设置 `AMassBattleFxRenderer` 蓝图默认值，包括 `NiagaraSystemAsset`、`NDC_BurstFx`、`SubType`、batch size 和 pooling cooldown。
 
-批处理 FX 的闭环是：读取/复制参考特效资产，准备 batched Niagara/NDC/Renderer 蓝图，由用户把 renderer actor 放进测试关卡，再用 Unit MCP 把 `FFxConfig` 写入 `Hit.SpawnFx`、`Death.SpawnFx`、`Attack.SpawnFx` 等数组。MCP 不负责自动修改当前关卡布局。
+批处理 FX 的闭环是：读取/复制参考特效资产，准备 batched Niagara/NDC/Renderer 蓝图，MCP 写入并验证 renderer 蓝图默认值，由用户把 renderer actor 放进测试关卡，再用 Unit MCP 把 `FFxConfig` 写入 `Hit.SpawnFx`、`Death.SpawnFx`、`Attack.SpawnFx` 等数组。MCP 不负责自动修改当前关卡布局；只要用户不在关卡里覆盖实例参数，拖进去的 actor 应继承资产默认值。
